@@ -1,0 +1,16 @@
+# torchvision==0.6.0
+numpy
+matplotlib
+omegaconf
+opencv_python_headless
+pandas
+pytorch_lightning
+albumentations
+hydra_core
+comet_ml
+tqdm
+torch
+pycocotools
+# hydra
+Pillow
+scikit_learn
