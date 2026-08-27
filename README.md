@@ -1,198 +1,81 @@
-<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
-<a name="readme-top"></a>
+# Tài liệu Kỹ thuật: Tiền xử lý Dữ liệu & Huấn luyện Mô hình Phát hiện Tổn thương Tuyến giáp
 
-<div align="center">
+Tài liệu mô tả chi tiết về tập dữ liệu ảnh xạ hình gốc, quy trình tiền xử lý ảnh y tế DICOM và cơ chế chuyển đổi định dạng nhãn cho 3 kiến trúc mô hình: **Faster R-CNN**, **DETR** và **YOLOv7**.
 
-  [![Pytorch][pytorch-shield]][pytorch-url]
-  [![Lightining][lightning-shield]][lightning-url]
-  [![LinkedIn][linkedin-shield]][linkedin-url]
+---
 
-</div>
+## 1. Tổng quan Dữ liệu Gốc (Dataset Overview)
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>TABLE OF CONTENTS</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-    </li>
-    <li><a href="#dataset">Dataset</a></li>
-    <li><a href="#experiment">Experiment</a></li>
-    <li><a href="#model-logs">Model logs</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ol>
-</details>
+* **Loại dữ liệu:** Ảnh xạ hình tuyến giáp và toàn thân (Thyroid Scintigraphy / SPECT) lưu dưới định dạng chuẩn y khoa DICOM (`.dcm`).
+* **Tổng số ca chụp gốc:** Khoảng **470 – 471 ảnh `.dcm`**.
+* **Kích thước ảnh:** Gồm ảnh $256 \times 256$, $512 \times 512$ (chụp tập trung vùng cổ/ngực) và $1024 \times 256$ (ảnh quét toàn thân).
+* **Độ sâu màu (Bit depth):** $12\text{-bit}$ hoặc $16\text{-bit}$ thể hiện cường độ bức xạ ion hóa.
+* **Các lớp mục tiêu (Classes):**
+  1. `thyroid`: Vùng mô tuyến giáp bắt giữ chất phóng xạ.
+  2. `shoulder`: Vùng khớp vai (làm mốc đối chứng nền bức xạ).
+* **Dữ liệu lâm sàng tích hợp trong bảng nhãn:** Bổ sung các chỉ số y khoa như `residual_state` (đánh giá còn sót mô giáp), `TSH`, `TG`, và `gap` (khoảng cách thời gian từ điều trị đến chụp).
 
+---
 
+## 2. Phân chia Tập Dữ liệu (Dataset Split)
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
+Dữ liệu được phân chia theo tỷ lệ chuẩn Machine Learning để đảm bảo tính khách quan và chống rò rỉ dữ liệu (Data Leakage):
 
-The purpose of this project is to build a model to assist in detecting residual thyroid tissue after a patient has undergone thyroidectomy using SPECT images. Experiment on multiple models and give the model the best results. The pipeline to solve this problem is showed as below diagram.
+* **Tập huấn luyện (Train set):** $\sim 70\%$ ($\sim 330$ ảnh) — Sử dụng để cập nhật trọng số mạng.
+* **Tập kiểm định (Validation set):** $\sim 15\%$ ($\sim 70$ ảnh) — Dùng để kiểm tra Overfitting, tinh chỉnh siêu tham số và Early Stopping.
+* **Tập kiểm thử (Test set):** $\sim 15\%$ ($\sim 70$ ảnh) — Đánh giá độc lập chất lượng mô hình sau cùng ($mAP@0.5$, $mAP@0.5:0.95$).
 
-<div align=center>
+---
 
-  | ![detection-pipeline](./assets/detection_pipeline.png) |
-  |:--:| 
-  | *Overall proposed detection pipeline* |
-</div>
+## 3. Quy trình Tiền xử lý Ảnh (Image Preprocessing Pipeline)
 
-<!-- GETTING STARTED -->
-## Getting Started
+Quá trình chuyển đổi từ ma trận pixel DICOM sang ma trận số thực tương thích với mạng nơ-ron gồm 4 bước kỹ thuật chính:
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+### Bước 1: Cắt vùng quan tâm (Cropping)
+Đối với các ảnh chụp quét toàn thân dài ($1024 \times 256$), tiến hành cắt lấy $512$ pixel nửa trên ($512 \times 256$) để tập trung vào giải phẫu vùng cổ và ngực, loại bỏ phần thân dưới không chứa đối tượng.
 
-### Prerequisites
+### Bước 2: Cân bằng dải tương phản (Intensity Windowing)
+* Áp dụng Percentile Clipping để loại bỏ nhiễu nền và các điểm chói xạ giả (lấy ngưỡng $1\%$ và $99.5\%$):
+  $$p_{min} = \text{Percentile}(I, 1), \quad p_{max} = \text{Percentile}(I, 99.5)$$
+* Chuẩn hóa Min-Max Scaling đưa dải mức xám về thang $8\text{-bit}$ ($[0, 255]$) và ép kiểu sang `uint8`:
+  $$I_{\text{scaled}} = \frac{\text{clip}(I, p_{min}, p_{max}) - p_{min}}{p_{max} - p_{min}} \times 255$$
 
-You need to have the following package:
-* `python >= 3.8`
-* `conda >= 23.1.0`
+### Bước 3: Chuẩn hóa không gian màu & Kích thước
+* Nhân bản ma trận xám $1$ kênh thành ảnh $3$ kênh (RGB) để tương thích với các kiến trúc Backbone tiền huấn luyện (Pre-trained weights ImageNet).
+* Đưa ảnh về kích thước chuẩn đầu vào ($512 \times 512$).
 
-Create and activate conda enviroment:
-```sh
-conda create -n <your_env_name> python=<python_version>
-conda activate <your_env_name>
-```
+---
 
-After these steps your conda enviroment should be activated.
+## 4. Định dạng Nhãn cho 3 Mô hình
 
-### Installation
+Mỗi kiến trúc yêu cầu cấu trúc và quy chuẩn tọa độ Bounding Box riêng biệt từ nhãn gốc $[x_{min}, y_{min}, w, h]$:
 
-1. Clone the repo
-   ```sh
-   git clone https://github.com/Nickeymaths/uet-thyroid-detection.git
-   cd uet-thyroid-detection
-   ```
-2. Install required packages
-   ```sh
-   pip install -r requirement.txt
-   ```
+### 1. Faster R-CNN
+* **Cấu trúc lưu trữ:** Bảng `.csv` (`train.csv`, `val.csv`, `test.csv`).
+* **Định dạng tọa độ:** Tọa độ pixel tuyệt đối $[x_{min}, y_{min}, x_{max}, y_{max}]$:
+  $$x_{max} = x_{min} + w, \quad y_{max} = y_{min} + h$$
+* **Quy ước nhãn:** Lớp `0` dành cho Background, `1: thyroid`, `2: shoulder`.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+### 2. DETR (DEtection TRansformer)
+* **Cấu trúc lưu trữ:** Chuẩn COCO JSON (`train.json`, `val.json`, `test.json`).
+* **Định dạng tọa độ:** Tọa độ pixel tuyệt đối $[x_{min}, y_{min}, w, h]$ kèm diện tích `area = w * h`.
+* **Quy ước nhãn:** `category_id` bắt đầu từ `1` (`1: thyroid`, `2: shoulder`), lớp `0` dành cho Background.
 
-### Demo
+### 3. YOLOv7
+* **Cấu trúc lưu trữ:** File nhãn `.txt` riêng biệt cho từng ảnh, file cấu hình `thyroid_data.yaml` và các file tiền biên dịch cache (`train.cache`, `val.cache`, `test.cache`).
+* **Định dạng tọa độ:** Chuẩn hóa về khoảng $[0, 1]$ theo tọa độ tâm và kích thước:
+  $$x_c = \frac{x_{min} + w/2}{W}, \quad y_c = \frac{y_{min} + h/2}{H}, \quad w_{norm} = \frac{w}{W}, \quad h_{norm} = \frac{h}{H}$$
+  Định dạng dòng ghi: `<class_id> <x_c> <y_c> <w_norm> <h_norm>`.
+* **Quy ước nhãn:** Đánh số bắt đầu từ `0` (`0: thyroid`, `1: shoulder`).
 
-Run the demo with the following command and the result is as shown below
-```sh
-gradio app.py
-```
+---
 
-<div align=center>
+## 5. Bảng So sánh Tổng hợp giữa 3 Mô hình
 
-  ![exp-settings](./assets/demo.png)
-</div>
-
-
-<!-- USAGE EXAMPLES -->
-## Dataset
-
-The dataset includes a total of 474 SPECT images with WB full-body scintigraphy of size 256x1024, assets images of size 512x512. The data set is divided into train, val, and test sets with the number of samples described as below table.
-
-|                |     Train |     Vald |     Test  |     Total |
-|----------------|-----------|----------|-----------|-----------|
-|       Samples  | 330       | 94       | 50        |474        |
-
-For each image, the shoulder position and residual thyroid tissue were determined by a rectangular bounding box by experienced physicians as below figures.
-
-Dataset link: https://drive.google.com/drive/folders/1NRFLViFTgWn_cELgd8lU07Hp-8yRH9Qa?usp=sharing
-
-<div align=center>
-
-  | ![detection-pipeline](./assets/negative_exp.png) ![detection-pipeline](./assets/positive_exp.png) |
-  |:--:| 
-  | *Ground truth bounding box of shoulder and neck position; Left is a case of successful tissue removal; Right is a case of unsuccessful tissue deletion and therefore residual thyroid tissue* |
-</div>
-
-The input image is preprocessed to 256x256 or 512x512 size before being included in the model.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Experiment
-This section descript experiment
-### Settings
-The following tables shows examined models and training settings for each ones.
-<div align=center>
-
-  ![exp-settings](./assets/exp_settings.png) ![training-settings](./assets/training_settings.png)
-</div>
-
-### Results
-
-Comparison of models detection performance evaluating on `mAP@0.5` using different number of brightness channel in input images in which 1 brightnes level corresponding original image without bright augmentation.
-<div align=center>
-
-  ![training-settings](./assets/exp_results.png)
-</div>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Models logs
-
-| Model       | Brightness | Path                                                                                                           |
-|-------------|------------|----------------------------------------------------------------------------------------------------------------|
-| DETR        | 1          | https://drive.google.com/file/d/13up9dBSqsqzbBXMq31HYsXxUyInraEkl/view?usp=share_link                          |
-|             | 2          | https://drive.google.com/file/d/1OcuDIp_B5NFelh1okJPdcMyfLzY7na88/view?usp=share_link                          |
-|             | 3          | https://drive.google.com/file/d/1yepN_pexmissdHEQzEMa5VXD7I507jN1/view?usp=share_link                          |
-|             | 4          | https://drive.google.com/file/d/1Kt70E78yKDPi5HXfDun_ZrjKRcuLt_XG/view?usp=share_link                          |
-|             | 5          | https://drive.google.com/file/d/1XTx6VGIj1Ebc252O1sXqQi_vnauvLUrU/view?usp=share_link                          |
-|             |            |                                                                                                                |
-| Faster-RCNN | 1          | https://drive.google.com/file/d/1c5y8IvPO2P9GAvpiMK6EfwCuL311HfoF/view?usp=share_link                          |
-|             | 2          | https://drive.google.com/file/d/1PBNJ4rt3JQJLJ4qbaQb__eQZibBa8EVE/view?usp=share_link                          |
-|             | 3          | https://drive.google.com/file/d/16IZHMJYukVkvHCxlwhHMtV-8ihYUzbs6/view?usp=share_link                          |
-|             | 4          | https://drive.google.com/file/d/13HEh1LdYZq2-njNReul_QKqGUongnK5E/view?usp=share_link                          |
-|             | 5          | https://drive.google.com/file/d/1BIgUFp9BW0sMKgb2P9t7SspmTWuJ03Xb/view?usp=share_link                          |
-|             |            |                                                                                                                |
-| YOLOv7      | 1          | https://drive.google.com/file/d/1MJQelQBXhskuEg0Won8zHKz9Eqy5Ikce/view?usp=share_link                          |
-|             | 2          | https://drive.google.com/file/d/1pYNtKLxjGC8ssbWFW7fwMl_H3rR3n5Dm/view?usp=share_link                          |
-|             | 3          | https://drive.google.com/file/d/1C2OUCCHGmxkp928KS4WT-OSTSJePAdMT/view?usp=share_link                          |
-|             | 4          | https://drive.google.com/file/d/1UFtaZM51Mf9zwFArkKBxqwxfH34pBDr_/view?usp=share_link                          |
-|             | 5          | https://drive.google.com/file/d/1Qu5PnGu0twt5RQ0gxG7r8yJGIC4bEr_K/view?usp=share_link                          |
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- LICENSE -->
-## License
-
-Distributed under the GPL License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- CONTACT -->
-## Contact
-Project Link: [https://github.com/Nickeymaths/uet-thyroid-detection](https://github.com/Nickeymaths/uet-thyroid-detection)
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[license-shield]: https://img.shields.io/badge/License-GNU%20GPL-blue
-[license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
-[lightning-shield]: https://img.shields.io/badge/Lightning-792DE4?style=for-the-badge&logo=pytorch-lightning&logoColor=white
-[lightning-url]: https://lightning.ai/
-[pytorch-shield]: https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white
-[pytorch-url]: https://pytorch.org/
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://www.linkedin.com/in/phạm-vĩnh-1030bb192/
+| Tiêu chí | Faster R-CNN | DETR | YOLOv7 |
+| :--- | :--- | :--- | :--- |
+| **Kiến trúc chính** | Two-stage (RPN + RoI Head) | Transformer Encoder-Decoder | One-stage Anchor-based |
+| **Định dạng nhãn** | Bảng CSV $[x_1, y_1, x_2, y_2]$ | COCO JSON $[x, y, w, h]$ | File TXT phân tán $[x_c, y_c, w, h]$ |
+| **Cơ chế nạp dữ liệu** | `torch.utils.data.DataLoader` | PyTorch COCO Dataset API | YOLO Dataset Loader qua `.cache` |
+| **Tăng cường dữ liệu** | Random Flip, Scaling | Multi-scale Resize ($480 \rightarrow 800$), Crop | Mosaic 4-ảnh, MixUp, HSV jitter |
+| **Đặc thù đầu ra** | Box Coordinates + Softmax Class Score | 100 Object Queries + Bipartite Matching Loss | Feature Pyramids Grid Predictions |
