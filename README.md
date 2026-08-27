@@ -53,7 +53,7 @@ Quá trình tiền xử lý diễn ra theo 4 giai đoạn kỹ thuật chính:
 ### Bước 4: Kết quả Thực tế sau Tiền xử lý
 
 <p align="center">
-  <img src="assert/preprocessed_sample.png" width="850" alt="Preprocessed Samples">
+  <img src="uet-thyroid-detection-main/assets/preprocessed_sample.png" width="850" alt="Preprocessed Samples">
   <br>
   <em>Hình 1: Kết quả ảnh xạ hình sau khi qua Percentile Windowing, Cropping và chuyển đổi thành ma trận RGB chuẩn kích thước (512, 512, 3).</em>
 </p>
