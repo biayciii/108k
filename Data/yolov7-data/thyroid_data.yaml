@@ -1,0 +1,6 @@
+train: /data.local/vinhpt/thyroid-detection/yolov7/data/images/train
+val: /data.local/vinhpt/thyroid-detection/yolov7/data/images/val
+test: /data.local/vinhpt/thyroid-detection/yolov7/data/images/test
+
+nc: 2
+names: ["shoulder", "thyroid"]
