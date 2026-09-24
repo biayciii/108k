@@ -153,14 +153,54 @@ pháp (mục 6).
 - Cài đặt FedProx, so sánh với FedAvg dưới điều kiện non-IID do partition tạo ra.
 - Đánh giá FL vs centralized (đã sửa leakage, cùng cấu hình huấn luyện) trên cùng bộ metric.
 
-## 6. Domain Adaptation  (chưa triển khai)
+## 6. Domain Adaptation — chiến lược mô phỏng khi dữ liệu bổ sung hạn chế
 
-Chờ một trong hai điều kiện: (a) có thêm dữ liệu SPECT thật, hoặc (b)
-có phương án mô phỏng domain shift được kiểm chứng là hợp lệ trên dữ liệu hiện có (ví dụ: phân
-biệt theo lô máy quét/thời kỳ hiệu chuẩn nếu metadata DICOM cho phép). Ứng viên phương pháp đã
-review sẵn trong Ref.xlsx (mục 4) sẽ được đánh giá lại khi RQ2 được kích hoạt: FedBN (chi phí
-thấp nhất, ưu tiên thử trước), LC-Fed (khi cần cá nhân hoá sâu hơn), FACMIC (khi cần khả năng
-tổng quát hoá sang viện hoàn toàn mới chưa tham gia huấn luyện).
+### 6.0. Kiểm tra thực tế: dữ liệu hiện có KHÔNG có sẵn biến thiên thiết bị
+
+Đã quét trực tiếp header DICOM (không suy đoán) trên mẫu ngẫu nhiên từ 471 ảnh hiện có: **100%
+cùng một máy `GE Infinia` + trạm xử lý `Xeleris 3.1108`**. Tức là "domain shift do khác máy
+quét/phần mềm" **không có sẵn** trong dữ liệu hiện tại — nếu muốn dùng lý do này phải tự tạo
+proxy, không thể lấy miễn phí từ dữ liệu đang có.
+
+### 6.1. Bối cảnh ràng buộc thực tế
+
+Khả năng xin thêm dữ liệu thật từ bệnh viện khác là thấp; kịch bản khả thi nhất là xin thêm được
+một lượng khiêm tốn (đủ nâng tổng dữ liệu lên khoảng 1.000 mẫu) rồi tự thiết kế mô phỏng domain
+shift trên nền dữ liệu này. Ba phương án được xếp hạng theo độ tin cậy khoa học, có thể phối hợp:
+
+**Bậc 1 (đáng tin nhất — chỉ cần một lượng nhỏ dữ liệu thật khác nguồn)**: nếu phần dữ liệu xin
+thêm đến từ một viện khác (dù chỉ vài chục ca), **không trộn vào pool train chung** — dành riêng
+làm tập test "unseen domain". Chỉ cần đủ để đo được "generalization gap" (mô hình global tụt bao
+nhiêu khi gặp domain chưa từng thấy), không cần đủ lớn để học — đúng thiết kế kiểu FACMIC.
+
+**Bậc 2 (nếu dữ liệu thêm vẫn cùng một viện — kịch bản nhiều khả năng xảy ra hơn)**: dùng
+**covariate shift có căn cứ lâm sàng thật**, không phải nhiễu giả lập:
+- `gap` = `study_datetime − treatment_datetime` (thời gian từ lúc uống I-131 đến lúc chụp) — đại
+  lượng này làm thay đổi thật sự phân phối cường độ đếm phóng xạ do phân rã + đào thải sinh học.
+  Chia client giả lập theo dải `gap` khác nhau tạo ra non-IID có ý nghĩa vật lý, không phải random
+  split gắn mác "domain shift".
+- Nếu dữ liệu mở rộng có thêm biến phân nhóm bệnh lý (loại ung thư, giai đoạn) — chia theo đó
+  cũng là shift thật về mặt bệnh lý, đúng tinh thần paper D1 tự nêu ("mỗi quần thể có đặc trưng
+  bệnh lý riêng").
+
+**Bậc 3 (chỉ dùng làm ablation phụ, không phải luận điểm chính)**: tái dùng pipeline
+`increase_count`/brightness-level đã có sẵn trong code (`src/{detr,faster_rcnn,yolov7}`) — gán
+mỗi client giả lập một mức brightness cố định khác nhau để giả lập "độ nhạy máy quét khác nhau".
+Đây là proxy nhân tạo, chỉ dùng để kiểm tra cơ chế của phương pháp DA hoạt động đúng (stress-test),
+không dùng làm bằng chứng chính cho luận điểm domain shift.
+
+### 6.2. Thiết kế thí nghiệm đề xuất
+
+Kết hợp 2 lớp: (a) non-IID "thật" theo `gap`/protocol làm nền cho phần FL chính ở mục 5.3 — giải
+quyết luôn điểm yếu "client giả lập bị chia IID giả tạo"; (b) nếu xin được dù chỉ một nhóm nhỏ ca
+từ viện khác, dành riêng làm test set domain lạ, không gộp vào 1.000 mẫu chia train/test chung —
+giá trị nằm ở việc **không train trên nó**, không nằm ở số lượng.
+
+### 6.3. Ứng viên phương pháp DA
+
+Chờ kích hoạt RQ2 khi có kết quả từ 6.1/6.2. Ứng viên đã review sẵn trong Ref.xlsx (mục 4): FedBN
+(chi phí thấp nhất, ưu tiên thử trước), LC-Fed (khi cần cá nhân hoá sâu hơn), FACMIC (khi cần khả
+năng tổng quát hoá sang viện hoàn toàn mới chưa tham gia huấn luyện).
 
 ## 7. Kế hoạch đánh giá
 
@@ -179,6 +219,50 @@ Giữ nguyên các metric đã dùng trong chuỗi nghiên cứu gốc để đ�
   baseline so với con số đã công bố trong D1–D5 — đây là điều được chủ đích chấp nhận để đảm bảo
   so sánh công bằng, cần nêu rõ trong phần Discussion khi công bố kết quả.
 
+## 9. Định hướng nâng cao chất lượng công bố (rank tạp chí/hội nghị)
+
+Vì FedAvg/FedProx tự thân không còn là novelty thuật toán, trần rank công bố được nâng bằng cách
+đóng khung nghiên cứu theo bài toán nghiệp vụ/thực tế thay vì thuần thuật toán. Bốn hướng đã chốt
+dùng, mỗi hướng kèm điều kiện/khảo sát cần hoàn tất trước khi đưa vào bản thảo:
+
+### 9.1. Đóng khung theo ràng buộc pháp lý/vận hành thật (đã khảo sát)
+
+Đã tra cứu trực tiếp văn bản pháp luật hiện hành của Việt Nam (không suy đoán), dùng làm căn cứ
+pháp lý chính thức cho việc dữ liệu SPECT/DICOM bệnh nhân không được rời khỏi bệnh viện dưới dạng
+tập trung hoá — đây chính là lý do tồn tại thật của FL, không phải giả định cho có:
+
+- **Luật Khám bệnh, chữa bệnh 2023 (Luật số 15/2023/QH15), Điều 69**: người hành nghề và cơ sở
+  khám chữa bệnh có nghĩa vụ giữ bí mật tình trạng bệnh, thông tin người bệnh cung cấp và hồ sơ
+  bệnh án, trừ khi người bệnh đồng ý chia sẻ hoặc thuộc trường hợp luật định (khoản 3, 4 Điều 69);
+  hồ sơ bệnh án phải có cơ chế bảo mật và kiểm soát truy cập.
+- **Nghị định 13/2023/NĐ-CP** (hiệu lực từ 01/7/2023) — văn bản đầu tiên của Việt Nam quy định
+  toàn diện về bảo vệ dữ liệu cá nhân: xếp tình trạng sức khoẻ/hồ sơ bệnh án vào nhóm **dữ liệu cá
+  nhân nhạy cảm**; yêu cầu đánh giá tác động khi thu thập/xử lý (Điều 24) và triển khai biện pháp
+  bảo vệ, quy chế nội bộ, phân định trách nhiệm rõ ràng (Điều 27, 28).
+
+→ Hai căn cứ này thay thế hoàn toàn cách viết motivation chung chung kiểu "privacy is important"
+bằng nghĩa vụ pháp lý cụ thể mà 108 Military Central Hospital đang phải tuân thủ.
+
+### 9.2. Đóng góp benchmark/reproducibility (đã chốt dùng)
+
+Giữ nguyên như mục 2 — biến toàn bộ phần Data & Training-Protocol Audit (leakage, split lệch giữa
+3 định dạng, thiếu cấu hình Faster-RCNN) thành một đóng góp độc lập có thể trích dẫn, tiếp nối
+đúng tinh thần dataset/benchmark paper của D1.
+
+### 9.3. Vòng validation lâm sàng thật (đã chốt dùng — cần chẩn đoán thật)
+
+So sánh kết quả centralized/FL với chẩn đoán của bác sĩ thật trên cùng ca (theo đúng cách D4 đã
+làm với 2 bác sĩ). **Điều kiện cần**: đây là yêu cầu **chẩn đoán thật** từ bác sĩ chuyên khoa —
+chưa có sẵn trong phạm vi hiện tại của repo, cần chủ động thu xếp với 108 Military Central
+Hospital trước khi đưa vào kế hoạch thí nghiệm chính thức.
+
+### 9.4. Đóng khung theo hạ tầng thực tế tuyến dưới (đã chốt dùng — cần khảo sát phần cứng)
+
+Đo chi phí communication/compute thực tế của FedAvg/FedProx trong điều kiện phần cứng khiêm tốn,
+đúng thực trạng các viện tuyến dưới. **Điều kiện cần**: cần khảo sát phần cứng thực tế tại các
+viện mục tiêu — hiện tại **giả định tạm thời chỉ có CPU nhiều nhân, không có GPU**, cho đến khi
+khảo sát xong và có số liệu thật để thay thế giả định này.
+
 ---
 
 ## Phụ lục: Ánh xạ tài liệu tham khảo
@@ -193,3 +277,7 @@ Giữ nguyên các metric đã dùng trong chuỗi nghiên cứu gốc để đ�
 
 Chi tiết Context–Decision–Rejected alternatives–Consequences của D1–D5: xem `.agents/record.md`
 mục 2. Danh sách đầy đủ tài liệu FL/DA đã review: `Docs/Ref.xlsx`.
+
+**Căn cứ pháp lý (mục 9.1)**:
+- Luật Khám bệnh, chữa bệnh 2023 (Luật số 15/2023/QH15): https://xaydungchinhsach.chinhphu.vn/toan-van-luat-15-2023-qh15-kham-benh-chua-benh-119231127164453959.htm
+- Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân: https://xaydungchinhsach.chinhphu.vn/toan-van-nghi-dinh-13-2023-nd-cp-bao-ve-du-lieu-ca-nhan-119230516104357809.htm

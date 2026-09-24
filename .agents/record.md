@@ -83,6 +83,29 @@ diễn thêm).
   (không dùng được số liệu D1–D5 cũ để so sánh); `proposal.md`/`outline.md` được viết lại theo
   roadmap này (xem `proposal.md`, `outline.md` ở root repo).
 
+**Addendum D6 (phiên sau, ngày 2026-09-24)** — bổ sung vào `proposal.md` mục 6 và mục 9 mới:
+- **Kiểm tra thật**: quét header DICOM trên mẫu ngẫu nhiên từ 471 ảnh hiện có → 100% cùng máy
+  `GE Infinia` + trạm `Xeleris 3.1108`. Kết luận: không có sẵn domain shift do khác thiết bị
+  trong dữ liệu hiện tại; phải tự tạo proxy nếu muốn dùng luận điểm domain shift.
+- **Quyết định (chưa triển khai, ghi lại làm chiến lược cho GĐ2)**: xếp hạng 3 phương án mô
+  phỏng domain shift theo độ tin cậy — Bậc 1 (dữ liệu thật từ viện khác, dù ít, dùng làm test set
+  "unseen domain" chứ không train), Bậc 2 (covariate shift thật từ `gap = study_datetime −
+  treatment_datetime` hoặc phân nhóm bệnh lý — ưu tiên dùng cho cả phần FL ở GĐ1 để non-IID có
+  căn cứ thật, không chỉ để dành cho DA), Bậc 3 (brightness-level nhân tạo, chỉ dùng ablation).
+- **Quyết định**: chốt 4 hướng nâng rank công bố cho nhánh FL-only (khi chưa có DA) — (1) đóng
+  khung theo căn cứ pháp lý thật: Luật Khám bệnh, chữa bệnh 2023 (Luật 15/2023/QH15) Điều 69 +
+  Nghị định 13/2023/NĐ-CP (đã tra cứu, xem link trong `proposal.md` Phụ lục); (2) đóng góp
+  benchmark/reproducibility từ chính phần Data & Training-Protocol Audit; (3) vòng validation với
+  chẩn đoán bác sĩ thật — **điều kiện treo**: cần chủ động thu xếp với 108 Military Central
+  Hospital, chưa có sẵn; (4) đóng khung theo hạ tầng tuyến dưới thật — **điều kiện treo**: cần
+  khảo sát phần cứng thật, tạm giả định chỉ có CPU nhiều nhân, không GPU, cho đến khi khảo sát.
+- **Consequences**: `proposal.md` được bổ sung mục 6 (viết lại) và mục 9 (mới); đã tạo bản Google
+  Doc mới nhất tại `https://docs.google.com/document/d/10sFv-GFE6xRMFoKkpfgY8-1iLeJUJZFWgDgJvtTFhkc`
+  (không ghi đè được doc gốc do giới hạn tool Google Drive — xem `record.md` không lưu; chi tiết
+  giới hạn tool nằm trong lịch sử hội thoại phiên này). Còn tồn 1 bản nháp cũ
+  (`1BFm5b_o7nFuksZ3yJGOFZmHvGAfTuP1feDuDQ2v-QIo`) và doc gốc người dùng gửi — cần người dùng tự
+  dọn trùng lặp trên Drive.
+
 ## 3. Bài học
 
 (agent bổ sung khi gặp lỗi thật trong lúc chạy: lỗi → cách sửa → rút ra)
