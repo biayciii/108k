@@ -10,7 +10,8 @@ về một quyết định thì thêm entry mới, ghi rõ "thay thế entry #N"
 | `README.md` (root) | Tài liệu kỹ thuật: tiền xử lý ảnh SPECT/DICOM + định dạng nhãn cho DETR/Faster-RCNN/YOLOv7 | Người dùng |
 | `original paper/` | 5 bài báo gốc (PDF) của nhóm nghiên cứu — nguồn quyết định/bài học ở mục 2 | Người dùng |
 | `Docs/Ref.xlsx` | Bảng theo dõi tài liệu tham khảo (lấy từ Google Sheet `108 K/Docs/Ref.xlsx` trên Drive) — tóm tắt + note cho 5 paper gốc và ~19 paper/git-repo khác đang được rà soát cho hướng nghiên cứu tiếp theo (privacy-preserving FL, MAE/representation learning, synthetic data, domain adaptation cho ảnh tuyến giáp) | Người dùng |
-| `uet-thyroid-detection-main/` | Code gốc: `app.py` (demo Gradio 3 model), `src/{detr,faster_rcnn,yolov7}/`, `data/`, `assets/`, `draft.ipynb`, `logistic_model.pkl`, `yolov7.pt` | Agent (đang chờ reorg — xem plan.csv T1/T2) |
+| `uet-thyroid-detection-main/` | Code gốc: `app.py` (demo Gradio 3 model), `src/{detr,faster_rcnn,yolov7}/`, `data/`, `assets/`, `draft.ipynb`, `logistic_model.pkl`, `yolov7.pt` — **legacy, không sửa/di chuyển** (xem D7) | Người dùng (chỉ đọc/import từ đây, không sửa) |
+| `Train/` | Cấu trúc code huấn luyện mới, tối ưu hơn — thiết kế + scaffold thật trong `Train/init.md` (D7). `configs/`, `src/common/{data,metrics,utils}`, `src/engine/trainer.py`, `scripts/train.py` đã có code chạy được (đã smoke-test); `src/models/*` còn chặn bởi xung đột tên package (mục 4 `Train/init.md`) | Agent (plan.csv T8, chưa Done — chờ model wiring) |
 | `Data/` | Dữ liệu đã convert sẵn theo 3 định dạng: `detr_data/` (COCO JSON), `faster-rcnn-data/` (CSV), `yolov7-data/` (YOLO txt + hyp/cfg) | Người dùng |
 | `plan.csv` | SSOT tiến độ (root repo) — viết lại theo roadmap D6 (GĐ0 Data & Training-Protocol Audit → GĐ1 Federated Learning → GĐ2 Domain Adaptation để ngỏ) | Agent (qua post-commit hook) |
 | `proposal.md` (root repo) | Đề cương học thuật hướng Federated Learning (D6) | Agent, review bởi người dùng |
@@ -106,9 +107,39 @@ diễn thêm).
   (`1BFm5b_o7nFuksZ3yJGOFZmHvGAfTuP1feDuDQ2v-QIo`) và doc gốc người dùng gửi — cần người dùng tự
   dọn trùng lặp trên Drive.
 
+### D7 — `uet-thyroid-detection-main/` là legacy, không đụng đến; cấu trúc train mới nằm ở `Train/` (root repo)
+- **Context**: Mục 4 (Câu hỏi treo vận hành) từng để ngỏ ranh giới `shared/` vs code đặc thù và
+  tên thư mục đích cho code hướng gốc không dùng nữa. Trong phiên dựng `Train/init.md`
+  (2026-09-28), người dùng chốt quyết định trực tiếp thay vì tiếp tục để ngỏ.
+- **Decision**: `uet-thyroid-detection-main/` giữ nguyên toàn bộ, coi là **legacy/tham chiếu** —
+  không sửa, không di chuyển bất kỳ file nào ra khỏi đó. Toàn bộ code huấn luyện mới (data
+  loading đã chuẩn hoá theo audit D6, config, sau này là FL simulation) được xây trong `Train/`
+  ở root repo — xem cây thư mục + nguyên tắc thiết kế trong `Train/init.md`. Định nghĩa model
+  (DETR/Faster-RCNN/YOLOv7) được **import lại** từ `uet-thyroid-detection-main/src`, không
+  copy-paste, không sửa tại chỗ.
+- **Rejected alternatives**: (a) Tạo `shared/` lồng bên trong `uet-thyroid-detection-main` (kế
+  hoạch T8 cũ) — bị loại vì muốn giữ thư mục này hoàn toàn nguyên vẹn làm mốc tái lập D1–D5. (b)
+  Di chuyển code hướng gốc không dùng nữa sang `original paper/` hoặc một thư mục tách riêng (kế
+  hoạch T9 cũ) — bị loại: không cần di chuyển gì cả, sự tách biệt đạt được tự nhiên bằng cách
+  không đụng vào `uet-thyroid-detection-main` và chỉ thêm code mới ở `Train/`.
+- **Consequences**: `plan.csv` T8/T9 được viết lại cho khớp quyết định này (T8 → dựng scaffold
+  `Train/` theo `Train/init.md`; T9 → thu hẹp thành xác nhận `Train/` không copy/sửa ngược vào
+  `uet-thyroid-detection-main`, không còn ý nghĩa "di chuyển code" ban đầu). Câu hỏi treo vận
+  hành cũ ở mục 4 coi như đã được trả lời bởi entry này.
+
 ## 3. Bài học
 
-(agent bổ sung khi gặp lỗi thật trong lúc chạy: lỗi → cách sửa → rút ra)
+- **Lỗi**: `yaml.safe_dump()` (PyYAML `SafeDumper`) không tự nhận diện `Config` (dict
+  subclass tự viết trong `Train/src/common/utils/config.py`) là `dict` — representer của
+  PyYAML tra theo `type(data)` chính xác, không theo `isinstance`, nên dump thất bại với
+  `RepresenterError: cannot represent an object` ngay khi config có dict con lồng nhau (mọi
+  config thật đều có, vd `training:`, `data:`).
+  **Cách sửa**: thêm hàm `_to_plain()` chuyển đệ quy `Config`/dict lồng nhau về `dict`/`list`
+  thuần trước khi `yaml.safe_dump`.
+  **Rút ra**: bất kỳ subclass nào của `dict`/`list` (kể cả tiện lợi khi viết code) đều cần tự
+  convert về type gốc trước khi đưa qua thư viện serialize ngoài (yaml/json) — không giả định
+  thư viện tự xử lý qua `isinstance`. Phát hiện được nhờ chủ động smoke-test
+  `save_resolved_config()` với config lồng nhau thật, không chỉ test với dict phẳng.
 
 ## 4. Câu hỏi treo
 
@@ -124,15 +155,21 @@ quyết ở phiên bản code hiện tại hay chưa):
 - (D5) Cần thử nghiệm lâm sàng (clinical validation) trên tập dữ liệu lớn hơn trước khi áp
   dụng mô hình đề xuất liều xạ trị vào thực tế điều trị.
 
-**Câu hỏi treo vận hành (chưa phải nghiên cứu, nay là T8/T9 trong plan.csv — đã gộp vào GĐ1
-Federated Learning thay vì đứng riêng như T1/T2 cũ):**
-- Trong `src/{detr,faster_rcnn,yolov7}/`, phần nào thực sự dùng chung (data loading, augmentation,
-  training loop) đủ để đưa vào `shared/`, và phần nào đặc thù riêng từng kiến trúc nên giữ
-  nguyên tại chỗ?
-- "Hướng nghiên cứu gốc không dùng nữa" cụ thể là hướng nào trong 3 model (DETR/Faster-RCNN/
-  YOLOv7), hay là toàn bộ cách tiếp cận object-detection nói chung (so với một hướng mới)?
-- Tên thư mục đích cho code cũ: dùng chung `original paper/` (hiện đang chứa 5 PDF) hay tách
-  riêng một thư mục mới để không trộn code với tài liệu tham khảo?
+**Câu hỏi treo vận hành cũ — ĐÃ TRẢ LỜI bởi D7 (2026-09-28), giữ lại để truy vết:**
+- ~~Trong `src/{detr,faster_rcnn,yolov7}/`, phần nào thực sự dùng chung... đủ để đưa vào
+  `shared/`?~~ → Không đưa vào `shared/` lồng trong uet nữa; toàn bộ code chung mới nằm ở
+  `Train/src/common/`, xem `Train/init.md`.
+- ~~"Hướng nghiên cứu gốc không dùng nữa" cụ thể là hướng nào?~~ → Không có hướng nào bị "loại
+  bỏ"/di chuyển; `uet-thyroid-detection-main` giữ nguyên 100% làm legacy, chỉ đơn giản là không
+  dùng để phát triển tiếp.
+- ~~Tên thư mục đích cho code cũ?~~ → Không cần thư mục đích — không di chuyển gì cả (D7).
+
+**Câu hỏi treo mới phát sinh khi scaffold `Train/` (D7, chặn phần còn lại của T8):**
+- `uet-thyroid-detection-main/src/` và `Train/src/` đều là package tên `src` — import kiểu
+  `from src.detr...` trong `Train/src/models/*/__init__.py` có nguy cơ resolve nhầm vào
+  `Train/src` rỗng thay vì package thật bên `uet-thyroid-detection-main`. Đổi tên package
+  `Train/src` (vd `train_lib`), hay dùng `importlib.util.spec_from_file_location` nạp thẳng
+  theo đường dẫn file? Xem `Train/init.md` mục 4 để biết chi tiết + trade-off 2 phương án.
 
 **Câu hỏi treo mới phát sinh từ Data & Training-Protocol Audit (D6, chặn T1–T7 trong plan.csv):**
 - Patient ID dùng để GroupKFold (T1) nên lấy từ cột `name` (dễ trùng do lỗi chính tả/viết hoa

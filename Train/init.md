@@ -143,13 +143,39 @@ python scripts/train.py --arch detr \
   --brightness-level 3
 ```
 
-## 4. Việc CHƯA làm trong tài liệu này (chờ xác nhận trước khi hiện thực hoá)
+## 4. Trạng thái hiện tại (cập nhật 2026-09-28, sau D7)
 
-- Chưa di chuyển/copy code thật từ `uet-thyroid-detection-main/src` — mục 1 mới là thiết kế
-  cây thư mục, chưa tạo file thật ngoài `init.md` này.
-- Chưa implement `federated.py` (FedAvg/FedProx) — đó là T11/T12 trong `plan.csv`, phụ thuộc
-  T8 (tạo khung `common/`) xong trước, và phụ thuộc T1/T2 (split canonical) đã có sẵn.
-- Chưa quyết định cách load YAML cụ thể (tự viết nhỏ gọn hay dùng thư viện như OmegaConf) —
-  để đơn giản tối đa dependency, ưu tiên tự viết nếu chỉ cần merge 2-3 cấp.
-- **Cần xác nhận riêng**: sửa lại mô tả T8/T9 trong `plan.csv` để trỏ đúng vào `Train/` thay vì
-  `uet-thyroid-detection-main/shared/` như hiện ghi.
+Đã xác nhận: `uet-thyroid-detection-main/` là legacy, không đụng đến (xem D7,
+`.agents/record.md` mục 2). Scaffold `Train/` đã dựng thật — không còn là thiết kế suông:
+
+- Đã tạo đủ cây thư mục mục 1, đã smoke-test qua (`config.py` merge/override/save,
+  `transforms.py` + `metrics/diagnosis.py` chạy với dữ liệu giả lập, `scripts/train.py` chạy
+  hết tới đúng điểm dừng dự kiến — `NotImplementedError` ở `load_canonical_split`).
+- `configs/{yolov7,detr}.yaml` đã điền **giá trị thật** port từ cấu hình/argparse hiện có
+  trong `uet-thyroid-detection-main` (không phải giá trị bịa) — coi như hoàn thành phần
+  "trích xuất tường minh" của T4. `configs/faster_rcnn.yaml` vẫn để `null` đúng theo phát hiện
+  audit (không có cấu hình nào được lưu lại — T5 chưa làm).
+- `plan.csv` T8 đã có DoD (check) kiểm được; T9 được thu hẹp lại và có DoD riêng — xem D7.
+
+**Phát hiện mới khi scaffold — CHƯA giải quyết, chặn bước wiring model thật (T8 phần còn lại)**:
+`uet-thyroid-detection-main/src/` và `Train/src/` đều là package tên `src`. Nếu
+`src/models/{detr,faster_rcnn,yolov7}/__init__.py` import kiểu `from src.detr...` sau khi
+`Train/src` đã được nạp làm module `src`, Python sẽ resolve nhầm vào `Train/src` (rỗng) thay vì
+package `src` thật trong `uet-thyroid-detection-main` — lỗi import sai **âm thầm**, không báo
+rõ ràng. Hai phương án chưa chọn:
+  (a) đổi tên package `Train/src` (vd `train_lib`) để hết đụng tên — ảnh hưởng mọi import nội
+      bộ đã viết trong scaffold này;
+  (b) dùng `importlib.util.spec_from_file_location` nạp thẳng theo đường dẫn file, không qua
+      tên module `src` chung — không cần đổi tên nhưng verbose hơn ở mỗi chỗ import model.
+Cần xác nhận trước khi viết code thật trong `src/models/*/__init__.py`.
+
+## 5. Việc CHƯA làm (chờ xác nhận/tuần tự theo plan.csv)
+
+- Chưa giải quyết xung đột tên package `src` nêu ở mục 4 — chặn wiring model thật.
+- Chưa implement `federated.py` (FedAvg/FedProx) — đó là T11/T12, phụ thuộc T8 xong trước và
+  phụ thuộc T10 (partition N-client).
+- Chưa implement `common/data/split.py` và `common/data/datasets.py` thật — chờ T1-T3.
+- Chưa implement `common/metrics/detection.py` (mAP) — cần chốt 1 công thức dùng chung cho cả
+  3 kiến trúc trước (hiện D1-D5 tự tính khác nhau giữa các paper).
+- Đã tự viết YAML load/merge nhỏ gọn thay vì OmegaConf/Hydra (mục 4 cũ) — giữ nguyên lựa chọn
+  này, đã đủ dùng cho merge 2 cấp base+arch hiện tại.

@@ -1,0 +1,21 @@
+# Train/configs/base.yaml
+# Control-variables DÙNG CHUNG cho cả 3 kiến trúc (proposal.md mục 5.2, nguyên tắc thiết kế #6
+# trong Train/init.md). Các giá trị `null` bên dưới CHƯA được chốt — phụ thuộc T4/T5/T6 trong
+# plan.csv (trích xuất cấu hình cũ của YOLOv7/DETR, tái tạo cấu hình Faster-RCNN, rồi mới chốt
+# 1 bộ control-variables chung). KHÔNG tự điền số cụ thể ở đây trước khi các task đó xong —
+# xem uet-thyroid-detection-main/README.md mục 3 cho pipeline tiền xử lý gốc.
+
+seed: 42
+
+data:
+  image_size: null # README.md (root) ghi 512x512 cho input model — xác nhận lại ở T6
+  brightness_level: null # app.py gốc để mỗi model khác nhau (frcnn=2, detr=4, yolov7=3) —
+    # T6 PHẢI chốt 1 giá trị dùng chung cho mọi kiến trúc trước khi train thật
+
+training:
+  epochs: null
+  batch_size: null
+  lr: null
+
+augmentation:
+  enabled: null # chính sách augmentation trong phạm vi kiến trúc cho phép — chốt ở T6

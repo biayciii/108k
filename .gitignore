@@ -1,1 +1,5 @@
 baselines/
+Train/runs/*
+!Train/runs/.gitkeep
+__pycache__/
+*.pyc
