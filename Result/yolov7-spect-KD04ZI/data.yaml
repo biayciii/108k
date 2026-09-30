@@ -1,0 +1,7 @@
+names:
+- shoulder
+- thyroid
+nc: 2
+test: /mnt/nvme2/users/utbt_sv1/ct_project/108k/Data/yolov7-data/images/test
+train: /mnt/nvme2/users/utbt_sv1/ct_project/108k/Data/yolov7-data/images/train
+val: /mnt/nvme2/users/utbt_sv1/ct_project/108k/Data/yolov7-data/images/val

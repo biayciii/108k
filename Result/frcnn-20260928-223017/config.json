@@ -1,0 +1,8 @@
+{
+  "data_dir": "../Data/faster-rcnn-data",
+  "checkpoint": "../checkpoints/frcnn-2bl",
+  "output_dir": "/mnt/nvme2/users/utbt_sv1/ct_project/108k/frcnn-20260928-223017",
+  "epochs": 100,
+  "batch_size": 1,
+  "device": "cuda"
+}
