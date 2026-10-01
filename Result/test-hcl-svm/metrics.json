@@ -1,0 +1,390 @@
+{
+  "exact_paper_reproduction": false,
+  "assumptions": [
+    "Methods reimplementation from PDF; exact authors split and implementation unavailable.",
+    "83-feature planar adaptation: 18 firstorder + 9 shape2D + 24 GLCM + 16 GLRLM + 16 GLSZM; Appendix A lists 3D shapes instead.",
+    "ROI radiomics uses an ellipse inside the predicted thyroid box; exact radiomics mask not specified in paper.",
+    "Histogram equalization: per-image min-max to uint8 then cv2.equalizeHist. Radiomics image 512x512; detector input 256x256.",
+    "RSI is the direct uptake ratio on original cropped counts, before interpolation or equalization.",
+    "Radiomics: binWidth=25, unit pixel spacing, no filters, no resampling in PyRadiomics; not specified by paper.",
+    "HCL: absolute Pearson correlation, average linkage with distance 1-|rho|; components smaller than cutoff retain individual features.",
+    "Normalized cluster features are averaged without sign alignment; scaler and clusters fit separately inside each training fold.",
+    "Kernel SVC uses L2 regularization, gamma=scale, coef0=0; paper mentions L1/L2 without enough implementation detail.",
+    "Table4 configurations are fixed in advance; this run does not recreate unspecified exhaustive authors GridSearch.",
+    "Default split is deterministic stratified grouped 80/20, not the unavailable original paper split.",
+    "Default patient groups are conservative normalized CSV-name proxies, not verified clinical patient identifiers.",
+    "Detector pretraining overlap with these scans is unknown; this cannot establish independent clinical validation.",
+    "Missing ROI/features are abstentions, reported in coverage and by label; no ground-truth ROI fallback."
+  ],
+  "cv": "patient-loo",
+  "selection": "Table4 parameters fixed before test; no test tuning",
+  "smoke_test": false,
+  "models": {
+    "rsi_logistic": {
+      "C": 10.0,
+      "degree": null,
+      "cv": {
+        "n_total": 390,
+        "n_scored": 370,
+        "n_abstained": 20,
+        "coverage": 0.9487179487179487,
+        "metric_population": "scans with valid detector ROI and feature extraction",
+        "f1": 0.7331786542923434,
+        "sensitivity": 0.6929824561403509,
+        "specificity": 0.6830985915492958,
+        "auc": 0.7632814430442303,
+        "confusion_matrix": {
+          "tn": 97,
+          "fp": 45,
+          "fn": 70,
+          "tp": 158
+        },
+        "abstained_by_label": {
+          "0": 13,
+          "1": 7
+        }
+      },
+      "test": {
+        "n_total": 80,
+        "n_scored": 76,
+        "n_abstained": 4,
+        "coverage": 0.95,
+        "metric_population": "scans with valid detector ROI and feature extraction",
+        "f1": 0.6588235294117647,
+        "sensitivity": 0.56,
+        "specificity": 0.7307692307692307,
+        "auc": 0.6961538461538461,
+        "confusion_matrix": {
+          "tn": 19,
+          "fp": 7,
+          "fn": 22,
+          "tp": 28
+        },
+        "abstained_by_label": {
+          "0": 3,
+          "1": 1
+        }
+      },
+      "feature_groups": null,
+      "n_model_features": 1
+    },
+    "rsi_svm": {
+      "C": 10.0,
+      "degree": 1,
+      "cv": {
+        "n_total": 390,
+        "n_scored": 370,
+        "n_abstained": 20,
+        "coverage": 0.9487179487179487,
+        "metric_population": "scans with valid detector ROI and feature extraction",
+        "f1": 0.711340206185567,
+        "sensitivity": 0.6052631578947368,
+        "specificity": 0.8450704225352113,
+        "auc": 0.7697986162589573,
+        "confusion_matrix": {
+          "tn": 120,
+          "fp": 22,
+          "fn": 90,
+          "tp": 138
+        },
+        "abstained_by_label": {
+          "0": 13,
+          "1": 7
+        }
+      },
+      "test": {
+        "n_total": 80,
+        "n_scored": 76,
+        "n_abstained": 4,
+        "coverage": 0.95,
+        "metric_population": "scans with valid detector ROI and feature extraction",
+        "f1": 0.6329113924050633,
+        "sensitivity": 0.5,
+        "specificity": 0.8461538461538461,
+        "auc": 0.6961538461538461,
+        "confusion_matrix": {
+          "tn": 22,
+          "fp": 4,
+          "fn": 25,
+          "tp": 25
+        },
+        "abstained_by_label": {
+          "0": 3,
+          "1": 1
+        }
+      },
+      "feature_groups": null,
+      "n_model_features": 1
+    },
+    "rr_svm": {
+      "C": 100.0,
+      "degree": 1,
+      "cv": {
+        "n_total": 390,
+        "n_scored": 370,
+        "n_abstained": 20,
+        "coverage": 0.9487179487179487,
+        "metric_population": "scans with valid detector ROI and feature extraction",
+        "f1": 0.8681818181818182,
+        "sensitivity": 0.8377192982456141,
+        "specificity": 0.852112676056338,
+        "auc": 0.8753397578453175,
+        "confusion_matrix": {
+          "tn": 121,
+          "fp": 21,
+          "fn": 37,
+          "tp": 191
+        },
+        "abstained_by_label": {
+          "0": 13,
+          "1": 7
+        }
+      },
+      "test": {
+        "n_total": 80,
+        "n_scored": 76,
+        "n_abstained": 4,
+        "coverage": 0.95,
+        "metric_population": "scans with valid detector ROI and feature extraction",
+        "f1": 0.8842105263157894,
+        "sensitivity": 0.84,
+        "specificity": 0.8846153846153846,
+        "auc": 0.8746153846153847,
+        "confusion_matrix": {
+          "tn": 23,
+          "fp": 3,
+          "fn": 8,
+          "tp": 42
+        },
+        "abstained_by_label": {
+          "0": 3,
+          "1": 1
+        }
+      },
+      "feature_groups": null,
+      "n_model_features": 84
+    },
+    "rr_hcl_svm": {
+      "C": 100.0,
+      "degree": 1,
+      "cv": {
+        "n_total": 390,
+        "n_scored": 370,
+        "n_abstained": 20,
+        "coverage": 0.9487179487179487,
+        "metric_population": "scans with valid detector ROI and feature extraction",
+        "f1": 0.8584474885844748,
+        "sensitivity": 0.8245614035087719,
+        "specificity": 0.8450704225352113,
+        "auc": 0.8702742772424017,
+        "confusion_matrix": {
+          "tn": 120,
+          "fp": 22,
+          "fn": 40,
+          "tp": 188
+        },
+        "abstained_by_label": {
+          "0": 13,
+          "1": 7
+        }
+      },
+      "test": {
+        "n_total": 80,
+        "n_scored": 76,
+        "n_abstained": 4,
+        "coverage": 0.95,
+        "metric_population": "scans with valid detector ROI and feature extraction",
+        "f1": 0.8958333333333334,
+        "sensitivity": 0.86,
+        "specificity": 0.8846153846153846,
+        "auc": 0.8792307692307691,
+        "confusion_matrix": {
+          "tn": 23,
+          "fp": 3,
+          "fn": 7,
+          "tp": 43
+        },
+        "abstained_by_label": {
+          "0": 3,
+          "1": 1
+        }
+      },
+      "feature_groups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          16
+        ],
+        [
+          4,
+          17,
+          46,
+          50,
+          53,
+          69
+        ],
+        [
+          45,
+          48
+        ],
+        [
+          43
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8,
+          14,
+          15
+        ],
+        [
+          10
+        ],
+        [
+          28,
+          44,
+          49
+        ],
+        [
+          9,
+          13,
+          18,
+          32,
+          34,
+          36,
+          39,
+          40,
+          51,
+          67,
+          80
+        ],
+        [
+          29,
+          31
+        ],
+        [
+          33,
+          41,
+          42,
+          47,
+          54,
+          59,
+          60,
+          70,
+          75,
+          81
+        ],
+        [
+          11
+        ],
+        [
+          12
+        ],
+        [
+          19
+        ],
+        [
+          20,
+          21,
+          22,
+          24,
+          26
+        ],
+        [
+          25
+        ],
+        [
+          23
+        ],
+        [
+          27
+        ],
+        [
+          30
+        ],
+        [
+          35,
+          63,
+          82
+        ],
+        [
+          61,
+          76
+        ],
+        [
+          62,
+          65,
+          77,
+          78
+        ],
+        [
+          37
+        ],
+        [
+          38
+        ],
+        [
+          52
+        ],
+        [
+          68
+        ],
+        [
+          55
+        ],
+        [
+          71
+        ],
+        [
+          56
+        ],
+        [
+          64
+        ],
+        [
+          72
+        ],
+        [
+          83
+        ],
+        [
+          57
+        ],
+        [
+          73
+        ],
+        [
+          58
+        ],
+        [
+          74
+        ],
+        [
+          66
+        ],
+        [
+          79
+        ]
+      ],
+      "n_model_features": 44
+    }
+  },
+  "selected_by_train_cv": "rr_svm"
+}

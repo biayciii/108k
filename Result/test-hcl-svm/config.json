@@ -1,0 +1,17 @@
+{
+  "data_root": "/mnt/nvme2/users/utbt_sv1/ct_project/108k/Data/detr_data",
+  "checkpoint": "/mnt/nvme2/users/utbt_sv1/ct_project/108k/checkpoints/detr-4bl",
+  "output_dir": "/mnt/nvme2/users/utbt_sv1/ct_project/108k/paper4-hcl-svm-20261001-145754-3856718",
+  "manifest": null,
+  "device": "cuda",
+  "seed": 42,
+  "roi_conf": 0.65,
+  "bin_width": 25.0,
+  "cv": "patient-loo",
+  "smoke_groups": 0,
+  "checkpoint_sha256": "bc511069489bdb704c25c55b1432254a51e0ce3f948b2cb8e89c4fcc7bdbba3b",
+  "manifest_sha256": "ec58b5d0f423c5f64c845581c7568e6057d93bcccbeb9726865625d01dfcf9bb",
+  "code_sha256": "c050712a00ebef9eac45482b55914b188bf0a2bcc9af9ff5abc0f5531ab88b4d",
+  "excluded_missing_diagnostic_labels": 1,
+  "grouping_verified": false
+}

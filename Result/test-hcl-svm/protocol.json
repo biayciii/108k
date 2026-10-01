@@ -1,0 +1,29 @@
+{
+  "assumptions": [
+    "Methods reimplementation from PDF; exact authors split and implementation unavailable.",
+    "83-feature planar adaptation: 18 firstorder + 9 shape2D + 24 GLCM + 16 GLRLM + 16 GLSZM; Appendix A lists 3D shapes instead.",
+    "ROI radiomics uses an ellipse inside the predicted thyroid box; exact radiomics mask not specified in paper.",
+    "Histogram equalization: per-image min-max to uint8 then cv2.equalizeHist. Radiomics image 512x512; detector input 256x256.",
+    "RSI is the direct uptake ratio on original cropped counts, before interpolation or equalization.",
+    "Radiomics: binWidth=25, unit pixel spacing, no filters, no resampling in PyRadiomics; not specified by paper.",
+    "HCL: absolute Pearson correlation, average linkage with distance 1-|rho|; components smaller than cutoff retain individual features.",
+    "Normalized cluster features are averaged without sign alignment; scaler and clusters fit separately inside each training fold.",
+    "Kernel SVC uses L2 regularization, gamma=scale, coef0=0; paper mentions L1/L2 without enough implementation detail.",
+    "Table4 configurations are fixed in advance; this run does not recreate unspecified exhaustive authors GridSearch.",
+    "Default split is deterministic stratified grouped 80/20, not the unavailable original paper split.",
+    "Default patient groups are conservative normalized CSV-name proxies, not verified clinical patient identifiers.",
+    "Detector pretraining overlap with these scans is unknown; this cannot establish independent clinical validation.",
+    "Missing ROI/features are abstentions, reported in coverage and by label; no ground-truth ROI fallback."
+  ],
+  "sources": [
+    "DOI:10.1002/ima.23066; supplied PDF pages3,5-11,14",
+    "https://pyradiomics.readthedocs.io/en/v3.0.1/features.html"
+  ],
+  "versions": {
+    "numpy": "1.26.4",
+    "scikit-learn": "1.7.2",
+    "torch": "2.2.2+cu118",
+    "pyradiomics": "3.0.1",
+    "SimpleITK": "2.3.1"
+  }
+}
