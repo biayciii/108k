@@ -13,6 +13,7 @@ về một quyết định thì thêm entry mới, ghi rõ "thay thế entry #N"
 | `uet-thyroid-detection-main/` | Code gốc: `app.py` (demo Gradio 3 model), `src/{detr,faster_rcnn,yolov7}/`, `data/`, `assets/`, `draft.ipynb`, `logistic_model.pkl`, `yolov7.pt` — **legacy, không sửa/di chuyển** (xem D7) | Người dùng (chỉ đọc/import từ đây, không sửa) |
 | `Train/` | Cấu trúc code huấn luyện mới, tối ưu hơn — thiết kế + scaffold thật trong `Train/init.md` (D7). `configs/`, `src/common/{data,metrics,utils}`, `src/engine/trainer.py`, `scripts/train.py` đã có code chạy được (đã smoke-test); `src/models/*` còn chặn bởi xung đột tên package (mục 4 `Train/init.md`) | Agent (plan.csv T8, chưa Done — chờ model wiring) |
 | `Data/` | Dữ liệu đã convert sẵn theo 3 định dạng: `detr_data/` (COCO JSON), `faster-rcnn-data/` (CSV), `yolov7-data/` (YOLO txt + hyp/cfg) | Người dùng |
+| `Experiments/Re-create/Result/` | Kết quả train/eval đã commit — dịch chuyển từ `Result/` cũ ngày 2026-10-02 (xem D8): 3 baseline runs (DETR/Faster-RCNN/YOLOv7) + `test-hcl-svm` (tái hiện D4, `exact_paper_reproduction: false`). `Train/runs/` vẫn là nơi output mới (gitignored) | Agent |
 | `plan.csv` | SSOT tiến độ (root repo) — viết lại theo roadmap D6 (GĐ0 Data & Training-Protocol Audit → GĐ1 Federated Learning → GĐ2 Domain Adaptation để ngỏ) | Agent (qua post-commit hook) |
 | `proposal.md` (root repo) | Đề cương học thuật hướng Federated Learning (D6) | Agent, review bởi người dùng |
 | `outline.md` (root repo) | Dàn ý chi tiết khớp 1-1 với `proposal.md` | Agent, review bởi người dùng |
@@ -126,6 +127,12 @@ diễn thêm).
   `Train/` theo `Train/init.md`; T9 → thu hẹp thành xác nhận `Train/` không copy/sửa ngược vào
   `uet-thyroid-detection-main`, không còn ý nghĩa "di chuyển code" ban đầu). Câu hỏi treo vận
   hành cũ ở mục 4 coi như đã được trả lời bởi entry này.
+
+### D8 — Chuyển kết quả train/eval sang `Experiments/Re-create/Result/` (2026-10-02)
+- **Context**: Pull ngày 30/09–01/10 thêm 2 commit kết quả (`faab0d3` DETR/FRCNN/YOLOv7, `384ceed` test-hcl-svm) nhưng không có code train mới — code train mới vẫn ở `Train/` (commit `1a61fc3`). Các thư mục kết quả nằm lẫn với code/docs ở root, khó tách biệt khi đọc repo.
+- **Decision**: Tạo `Experiments/` làm thư mục cha cho các nhánh thực nghiệm; di chuyển nguyên `Result/` → `Experiments/Re-create/Result/` bằng `git mv` (giữ lịch sử, LFS pointer `*.pth`/`*.pt` không đổi). `Train/` giữ nguyên ở root. Cập nhật tất cả tham chiếu đường dẫn trong `AGENTS.md` root. Tên "Re-create" phản ánh bộ kết quả tái lập baseline các paper D1–D5.
+- **Rejected alternatives**: Tạo `Experiments/` mà xóa `Result/` cũ thay vì `git mv` — bị loại vì mất lịch sử blame/diff. Chuyển cả `Train/` vào `Experiments/` — bị loại vì `Train/` là scaffold đang phát triển, không phải kết quả thực nghiệm hoàn tất.
+- **Consequences**: `AGENTS.md` và `record.md` dùng đường dẫn `Experiments/Re-create/Result/`; `git log --follow` vẫn truy vết được file cũ trong `Result/`; mọi script/path tuyệt đối trong `config.json` của các run cũ (`/mnt/nvme2/...`) vốn đã không trỏ local nên không bị ảnh hưởng.
 
 ## 3. Bài học
 
