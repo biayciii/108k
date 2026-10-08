@@ -2,21 +2,21 @@
 
 ## 1. Bối cảnh & Động lực
 
-Chuỗi 5 nghiên cứu gốc của nhóm (xem `original paper/`, tóm tắt quyết định D1–D5 trong
+Chuỗi 5 nghiên cứu gốc của nhóm (xem `original paper/`, tóm tắt quyết định (ký hiệu D1–D5 trong record.md) trong
 `.agents/record.md`) đã đi qua bốn giai đoạn liên tiếp:
 
-1. **Thu thập & chuẩn hoá dữ liệu** — D1, *New thyroid scintigraphy datasets: Construction and
+1. **Thu thập & chuẩn hoá dữ liệu** — paper 1, *New thyroid scintigraphy datasets: Construction and
    benchmark assessment* (2023): xây hai bộ dữ liệu chuẩn hoá từ 559 ảnh SPECT của Bệnh viện
    TWQĐ 108 (2020–2021), benchmark bằng transfer learning trên nhiều CNN pretrained.
-2. **Detection** — D2 (*A deep learning method using SPECT images...*, NICS 2022, phân loại
-   bằng CNN fine-tune) và D3 (*Utilizing DETR model on SPECT image...*, SSP 2023, chuyển sang
+2. **Detection** — paper 2 (*A deep learning method using SPECT images...*, NICS 2022, phân loại
+   bằng CNN fine-tune) và paper 3 (*Utilizing DETR model on SPECT image...*, SSP 2023, chuyển sang
    object detection bằng DETR/Faster-RCNN/YOLOv7 + định nghĩa chỉ số RSI).
-3. **Tăng tính giải thích** — D4, *RR-HCL-SVM: A Two-Stage Framework...* (IJIST 2024): kết hợp
+3. **Tăng tính giải thích** — paper 4, *RR-HCL-SVM: A Two-Stage Framework...* (IJIST 2024): kết hợp
    RSI với 83 đặc trưng radiomics, giảm chiều bằng clustering, phân loại bằng SVM.
-4. **Ứng dụng lâm sàng** — D5, *Ablation dosage recommendation...* (2024): Decision Tree (C4.5)
+4. **Ứng dụng lâm sàng** — paper 5, *Ablation dosage recommendation...* (2024): Decision Tree (C4.5)
    khuyến nghị liều I-131 từ RSI + dữ liệu lâm sàng, ưu tiên explainability.
 
-Cả 5 nghiên cứu đều dùng dữ liệu từ **một bệnh viện duy nhất**. Paper D1 tự thừa nhận hai giới
+Cả 5 nghiên cứu đều dùng dữ liệu từ **một bệnh viện duy nhất**. Paper 1 tự thừa nhận hai giới
 hạn cốt lõi chưa từng được giải quyết trong toàn bộ chuỗi nghiên cứu:
 
 > *"sharing this dataset with other researchers has been limited"* — dữ liệu độc quyền, khó chia
@@ -50,9 +50,9 @@ yolov7-data}` (so khớp theo DICOM UID) và cấu hình huấn luyện của 3 
 | DETR (`Data/detr_data`) | 330 | 94 | 47 | 471 |
 | **Union thực tế (không trùng lặp)** | | | | **471 ảnh DICOM duy nhất** |
 
-Con số này khác với 559 ảnh mà paper D1 báo cáo đã dùng, và khác với 396 ảnh (278/79/39) mà
-paper D3 báo cáo cho thí nghiệm DETR — tức là bộ dữ liệu hiện có trong `Data/` **không phải bản
-dùng để tạo ra các con số đã công bố**, và không thể tái lập chính xác kết quả của D1/D3 từ dữ
+Con số này khác với 559 ảnh mà paper 1 báo cáo đã dùng, và khác với 396 ảnh (278/79/39) mà
+paper 3 báo cáo cho thí nghiệm DETR — tức là bộ dữ liệu hiện có trong `Data/` **không phải bản
+dùng để tạo ra các con số đã công bố**, và không thể tái lập chính xác kết quả của paper 1/paper 3 từ dữ
 liệu hiện tại.
 
 ### 2.2. Ba định dạng dữ liệu không dùng chung một cách chia train/val/test
@@ -61,7 +61,7 @@ Faster-RCNN và YOLOv7 dùng đúng một pool 470 ảnh với **split giống h
 từng ID). DETR dùng một pool khác (471 ảnh) với **split hoàn toàn độc lập**: chỉ 7/47 ảnh trong
 test set của DETR cũng nằm trong test set Faster-RCNN/YOLOv7; 29/47 ảnh "test" của DETR thực ra
 là ảnh mà Faster-RCNN/YOLOv7 đã dùng để **train**. Do đó, các con số so sánh mAP/F1 giữa 3 kiến
-trúc trong paper D3 (căn cứ để chọn DETR làm detector chính) **không được đo trên cùng một test
+trúc trong paper 3 (căn cứ để chọn DETR làm detector chính) **không được đo trên cùng một test
 set** — đây là một confound thực sự trong nghiên cứu gốc.
 
 ### 2.3. Rò rỉ dữ liệu ở mức bệnh nhân (patient-level leakage)
@@ -88,6 +88,23 @@ test, làm thổi phồng các chỉ số hiệu năng đã báo cáo.
 
 → Nếu không khoá lại cả dữ liệu lẫn cấu hình huấn luyện, mọi khác biệt hiệu năng đo được giữa
 centralized và FL sau này đều có thể chỉ là do những confound trên, không phải do bản thân FL.
+
+### 2.5. Đối chiếu con số paper báo cáo với dữ liệu thực tế trong repo
+
+| Nguồn bài | Số liệu bài báo | Thực tế repo (`Data/`) | Khớp? |
+|---|---|---|---|
+| Paper 1 | 559 ảnh | 471 ảnh DICOM (audit D6) | ✗ thiếu ~88 |
+| Paper 2 | 1.777 thu thập → 1.430 dùng | nằm trong 471 của repo | chỉ là tập con |
+| Paper 3 | 496 case, split 278/79/39 | 330/94/47 (ảnh), split khác hẳn | ✗ khác cả số lẫn split |
+| Paper 4 | 430 case, 340/100 | `test-hcl-svm` dùng 390 scan (370 scored) | gần khớp quy mô, khác số |
+| Paper 5 | 3.213 ca | không có trong repo | ngoài phạm vi |
+
+Con số bài báo và dữ liệu thực tế **không khớp nhau ở hầu hết các bài**. Hệ quả:
+để FL có ý nghĩa và Domain Adaptation chuẩn (có domain shift thật để kiểm chứng),
+cần **thêm dữ liệu** (T17 — xin dữ liệu SPECT thật, ưu tiên dù ít từ viện khác) và
+**điều tra phân phối** (T20 — phân phối không gian nhãn, `residual_state`, theo
+bệnh nhân) — từ đó mới xây được kịch bản lệch miền có căn cứ thay vì mô phỏng proxy
+(theo chiến lược 3 bậc ở mục 6.1).
 
 ## 3. Vấn đề nghiên cứu
 
@@ -180,7 +197,7 @@ nhiêu khi gặp domain chưa từng thấy), không cần đủ lớn để h�
   Chia client giả lập theo dải `gap` khác nhau tạo ra non-IID có ý nghĩa vật lý, không phải random
   split gắn mác "domain shift".
 - Nếu dữ liệu mở rộng có thêm biến phân nhóm bệnh lý (loại ung thư, giai đoạn) — chia theo đó
-  cũng là shift thật về mặt bệnh lý, đúng tinh thần paper D1 tự nêu ("mỗi quần thể có đặc trưng
+  cũng là shift thật về mặt bệnh lý, đúng tinh thần paper 1 tự nêu ("mỗi quần thể có đặc trưng
   bệnh lý riêng").
 
 **Bậc 3 (chỉ dùng làm ablation phụ, không phải luận điểm chính)**: tái dùng pipeline
@@ -205,7 +222,7 @@ năng tổng quát hoá sang viện hoàn toàn mới chưa tham gia huấn luy�
 ## 7. Kế hoạch đánh giá
 
 Giữ nguyên các metric đã dùng trong chuỗi nghiên cứu gốc để đảm bảo có thể so sánh xuyên suốt:
-- **Detection**: mAP@0.5 (thyroid), mAP@0.3 (shoulder, theo quy ước D3).
+- **Detection**: mAP@0.5 (thyroid), mAP@0.3 (shoulder, theo quy ước paper 3).
 - **Chẩn đoán qua RSI**: Precision, Recall, F1, Accuracy — so sánh centralized vs FedAvg vs
   FedProx trên cùng split canonical (mục 5.1) và cùng cấu hình (mục 5.2).
 
@@ -216,7 +233,7 @@ Giữ nguyên các metric đã dùng trong chuỗi nghiên cứu gốc để đ�
 - Đây là **mô phỏng multi-client trên dữ liệu một viện**, chưa phải triển khai đa viện thật —
   kết quả chứng minh tính khả thi hạ tầng, chưa phải bằng chứng lâm sàng.
 - Việc chuẩn hoá cấu hình huấn luyện có thể làm thay đổi (tăng hoặc giảm) hiệu năng centralized
-  baseline so với con số đã công bố trong D1–D5 — đây là điều được chủ đích chấp nhận để đảm bảo
+  baseline so với con số đã công bố trong paper 1–5 — đây là điều được chủ đích chấp nhận để đảm bảo
   so sánh công bằng, cần nêu rõ trong phần Discussion khi công bố kết quả.
 
 ## 9. Định hướng nâng cao chất lượng công bố (rank tạp chí/hội nghị)
@@ -247,11 +264,11 @@ bằng nghĩa vụ pháp lý cụ thể mà 108 Military Central Hospital đang 
 
 Giữ nguyên như mục 2 — biến toàn bộ phần Data & Training-Protocol Audit (leakage, split lệch giữa
 3 định dạng, thiếu cấu hình Faster-RCNN) thành một đóng góp độc lập có thể trích dẫn, tiếp nối
-đúng tinh thần dataset/benchmark paper của D1.
+đúng tinh thần dataset/benchmark paper của paper 1.
 
 ### 9.3. Vòng validation lâm sàng thật (đã chốt dùng — cần chẩn đoán thật)
 
-So sánh kết quả centralized/FL với chẩn đoán của bác sĩ thật trên cùng ca (theo đúng cách D4 đã
+So sánh kết quả centralized/FL với chẩn đoán của bác sĩ thật trên cùng ca (theo đúng cách paper 4 đã
 làm với 2 bác sĩ). **Điều kiện cần**: đây là yêu cầu **chẩn đoán thật** từ bác sĩ chuyên khoa —
 chưa có sẵn trong phạm vi hiện tại của repo, cần chủ động thu xếp với 108 Military Central
 Hospital trước khi đưa vào kế hoạch thí nghiệm chính thức.
@@ -269,13 +286,13 @@ khảo sát xong và có số liệu thật để thay thế giả định này.
 
 | Ký hiệu | Paper | Vai trò trong đề cương |
 |---|---|---|
-| D1 | New thyroid scintigraphy datasets... (2023) | Nguồn dữ liệu gốc + động lực FL/DA |
-| D2 | A deep learning method using SPECT images... (NICS 2022) | Bối cảnh detection giai đoạn 1 |
-| D3 | Utilizing DETR model on SPECT image... (SSP 2023) | Nguồn 3 kiến trúc detection + RSI hiện có |
-| D4 | RR-HCL-SVM: A Two-Stage Framework... (IJIST 2024) | Nguồn hướng "tính giải thích" |
-| D5 | Ablation dosage recommendation... (2024) | Nguồn hướng "ứng dụng" |
+| Paper 1 | New thyroid scintigraphy datasets... (2023) | Nguồn dữ liệu gốc + động lực FL/DA |
+| Paper 2 | A deep learning method using SPECT images... (NICS 2022) | Bối cảnh detection giai đoạn 1 |
+| Paper 3 | Utilizing DETR model on SPECT image... (SSP 2023) | Nguồn 3 kiến trúc detection + RSI hiện có |
+| Paper 4 | RR-HCL-SVM: A Two-Stage Framework... (IJIST 2024) | Nguồn hướng "tính giải thích" |
+| Paper 5 | Ablation dosage recommendation... (2024) | Nguồn hướng "ứng dụng" |
 
-Chi tiết Context–Decision–Rejected alternatives–Consequences của D1–D5: xem `.agents/record.md`
+Chi tiết Context–Decision–Rejected alternatives–Consequences (ký hiệu D1–D5): xem `.agents/record.md`
 mục 2. Danh sách đầy đủ tài liệu FL/DA đã review: `Docs/Ref.xlsx`.
 
 **Căn cứ pháp lý (mục 9.1)**:
