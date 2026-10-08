@@ -1,5 +1,19 @@
 # AGENTS.md
 
+> Migration agent-gov 0.9.0 (2026-10-08): `plan.csv` giữ format tiếng Việt + post-commit hook
+> (xem `.agents/working-process.md`). Quyết định mới ghi vào `.agents/wiki/decisions-log.md`
+> (D1–D8 đã copy nguyên từ `.agents/record.md`). `.agents/record.md` giữ làm archive.
+
+## Profile
+
+- What: Phát hiện mô tuyến giáp còn sót lại sau cắt tuyến giáp từ ảnh SPECT (DETR/Faster R-CNN/YOLOv7)
+- Goal: Hướng Federated Learning, hoặc Domain Adaptation nếu đủ dữ liệu đa viện; chọn kiến trúc detector tối ưu và kết quả tái lập được
+- Stack: Python (PyTorch), nghiên cứu · Task id prefix: `T` · GitHub, branch `main`
+- Research project: yes · Gate command: (trống) · External tracker: none
+- Roles: xem `.agents/roles.md`
+- Python: `python3`
+
+
 Nghiên cứu phát hiện mô tuyến giáp sót lại sau cắt tuyến giáp từ ảnh SPECT (DETR / Faster R-CNN / YOLOv7), định hướng Federated Learning. Luật vận hành chi tiết nằm ở `.agents/AGENTS.md` — đọc file đó đầu mỗi phiên; file này chỉ ghi những gì agent dễ sai/bỏ sót.
 
 ## Việc đầu phiên (tóm tắt)
