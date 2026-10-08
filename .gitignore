@@ -3,3 +3,5 @@ Train/runs/*
 !Train/runs/.gitkeep
 __pycache__/
 *.pyc
+.agents/state/
+.agents/*.bak
