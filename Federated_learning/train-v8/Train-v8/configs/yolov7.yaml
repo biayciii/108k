@@ -1,0 +1,44 @@
+# Train/configs/yolov7.yaml — override riêng YOLOv7, merge lên base.yaml.
+#
+# Giá trị dưới đây là cấu hình THẬT đã có sẵn, port nguyên văn từ:
+#   uet-thyroid-detection-main/runs/train/yolov7_thyroid3/opt.yaml
+#   uet-thyroid-detection-main/data/hyp.scratch.p5.yaml
+# Đây là cấu hình đã tạo ra checkpoint yolov7.pt hiện dùng trong app.py — KHÔNG phải suy đoán.
+# Việc chính thức "trích xuất & ghi lại tường minh" theo T4 trong plan.csv coi như đã làm ở
+# đây; T4 chỉ còn việc xác nhận tay + copy sang định dạng cuối cùng nếu schema base.yaml đổi.
+
+training:
+  epochs: 300
+  batch_size: 8
+  lr: 0.01 # lr0 trong hyp.scratch.p5.yaml (SGD)
+  lr_final_factor: 0.1 # lrf — lr cuối = lr0 * lrf (OneCycleLR)
+  momentum: 0.937
+  weight_decay: 0.0005
+  warmup_epochs: 3.0
+
+loss_gains:
+  box: 0.05
+  cls: 0.3
+  obj: 0.7
+
+augmentation:
+  # Toàn bộ augmentation hình học TẮT trong cấu hình gốc — port nguyên trạng, không tự bật lại
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  degrees: 0.0
+  translate: 0.0
+  scale: 0.0
+  shear: 0.0
+  perspective: 0.0
+  flipud: 0.0
+  fliplr: 0.0
+  mosaic: 0.0
+  mixup: 0.0
+
+data:
+  # img_size trong opt.yaml gốc không phải scalar đơn — cần đọc lại đúng field trước khi
+  # đưa vào code thật (T4). Brightness level thật đang dùng cho checkpoint hiện có: 3
+  # (xem app.py::brightness_dict['yolov7']) — có thể KHÁC với brightness_level chung sẽ
+  # chốt ở T6, không tự đồng nhất 2 giá trị này.
+  brightness_level_legacy: 3

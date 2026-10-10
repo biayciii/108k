@@ -1,0 +1,18 @@
+# Exploratory same-split, same-initialization comparison. Not paper reproduction.
+seed: 42
+protocol: exploratory_detr_from_scratch_same_initialization
+data:
+  image_size: 256
+  brightness_level: 3
+architecture:
+  train_all_backbone: true
+training:
+  epochs: 100
+  batch_size: 1
+  lr: 0.0001
+  lr_backbone: 0.00001
+  optimizer: adamw
+  weight_decay: 0.0001
+  grad_clip_norm: 0.1
+augmentation:
+  enabled: false

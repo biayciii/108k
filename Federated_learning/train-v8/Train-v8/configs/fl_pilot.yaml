@@ -1,0 +1,17 @@
+# Engineering pilot only: random initialization, 1 round, 1 local epoch.
+# This is not a final T6 protocol or a reproduction of legacy training.
+seed: 42
+protocol: exploratory_pipeline_pilot
+data:
+  image_size: 256
+  brightness_level: 3
+training:
+  epochs: 1
+  batch_size: 1
+  lr: 0.0001
+  lr_backbone: 0.00001
+  optimizer: adamw
+  weight_decay: 0.0001
+  grad_clip_norm: 0.1
+augmentation:
+  enabled: false

@@ -1,0 +1,37 @@
+# Train/configs/detr.yaml — override riêng DETR, merge lên base.yaml.
+#
+# Giá trị dưới đây port nguyên văn từ default trong argparse của
+# uet-thyroid-detection-main/src/detr/main.py::get_args_parser(). Đây CHỈ là default trong
+# code, KHÔNG có file cấu hình nào được lưu lại riêng cho lần train tạo ra checkpoint đang
+# dùng trong app.py (xem proposal.md mục 2.4) — nên KHÔNG chắc đây là cấu hình thật đã train.
+# T4 trong plan.csv cần xác nhận lại (hoặc chấp nhận không truy được, ghi rõ unknown).
+
+training:
+  epochs: 300
+  batch_size: 2 # argparse default — rất nhỏ so với YOLOv7 (8), chưa rõ có đúng lần train thật
+  lr: 0.0001
+  lr_backbone: 0.00001
+  weight_decay: 0.0001
+  lr_drop: 200
+
+architecture:
+  backbone: resnet50
+  enc_layers: 6
+  dec_layers: 6
+  dim_feedforward: 2048
+  hidden_dim: 256
+  dropout: 0.1
+  nheads: 8
+  num_queries: 75
+
+loss_cost:
+  set_cost_class: 1
+  set_cost_bbox: 5
+  set_cost_giou: 2
+
+data:
+  # brighness_levels default trong argparse là 5, nhưng checkpoint đang dùng trong app.py lại
+  # chạy ở mức 4 (app.py::brightness_dict['detr']) — không đồng nhất, KHÔNG tự chọn 1 trong 2,
+  # để T4/T6 xác nhận.
+  brightness_level_legacy_argparse_default: 5
+  brightness_level_legacy_app_py: 4

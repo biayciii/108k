@@ -1,0 +1,18 @@
+# Train/configs/faster_rcnn.yaml — override riêng Faster-RCNN, merge lên base.yaml.
+#
+# KHÁC với yolov7.yaml/detr.yaml: Faster-RCNN HOÀN TOÀN KHÔNG có cấu hình huấn luyện nào được
+# lưu lại — không có configs/ Hydra, không có train.py nào trong
+# uet-thyroid-detection-main/src/faster_rcnn/ (xem proposal.md mục 2.4). Checkpoint .ckpt hiện
+# có KHÔNG thể xác minh lại đã train bằng thông số gì.
+#
+# Đây chính xác là việc T5 trong plan.csv phải làm (tái tạo cấu hình, hoặc ghi rõ unknown nếu
+# không truy được) — KHÔNG tự bịa số ở đây để lấp chỗ trống.
+
+training:
+  epochs: null # KHÔNG XÁC ĐỊNH — xem T5, plan.csv
+  batch_size: null
+  lr: null
+
+data:
+  # brightness level đang dùng cho checkpoint hiện có (app.py::brightness_dict['frcnn'])
+  brightness_level_legacy: 2
