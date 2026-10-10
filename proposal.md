@@ -43,17 +43,22 @@ yolov7-data}` (so khớp theo DICOM UID) và cấu hình huấn luyện của 3 
 
 ### 2.1. Tổng số mẫu thực chất khác với con số các paper báo cáo
 
-| Nguồn | Train | Val | Test | Tổng |
-|---|---|---|---|---|
-| Faster-RCNN (`Data/faster-rcnn-data`) | 329 | 94 | 47 | 470 |
-| YOLOv7 (`Data/yolov7-data`) | 329 | 94 | 47 | 470 |
-| DETR (`Data/detr_data`) | 330 | 94 | 47 | 471 |
-| **Union thực tế (không trùng lặp)** | | | | **471 ảnh DICOM duy nhất** |
+| Nguồn bài | Số liệu bài báo | Thực tế repo (`Data/`) | Khớp? |
+|---|---|---|---|
+| Paper 1 | 559 ảnh | 471 ảnh DICOM (audit D6) | ✗ thiếu ~88 |
+| Paper 2 | 1.777 thu thập → 1.430 dùng | nằm trong 471 của repo | chỉ là tập con |
+| Paper 3 | 496 case, split 278/79/39 | 330/94/47 (ảnh), split khác hẳn | ✗ khác cả số lẫn split |
+| Paper 4 | 430 case, 340/100 | `test-hcl-svm` dùng 390 scan (370 scored) | gần khớp quy mô, khác số |
+| Paper 5 | 3.213 ca | không có trong repo | ngoài phạm vi |
 
-Con số này khác với 559 ảnh mà paper 1 báo cáo đã dùng, và khác với 396 ảnh (278/79/39) mà
-paper 3 báo cáo cho thí nghiệm DETR — tức là bộ dữ liệu hiện có trong `Data/` **không phải bản
-dùng để tạo ra các con số đã công bố**, và không thể tái lập chính xác kết quả của paper 1/paper 3 từ dữ
-liệu hiện tại.
+
+Con số bài báo và dữ liệu thực tế **không khớp nhau ở hầu hết các bài**. Hệ quả:
+để FL có ý nghĩa và Domain Adaptation chuẩn (có domain shift thật để kiểm chứng),
+cần **thêm dữ liệu** (T17 — xin dữ liệu SPECT thật, ưu tiên dù ít từ viện khác) và
+**điều tra phân phối** (T20 — phân phối không gian nhãn, `residual_state`, theo
+bệnh nhân) — từ đó mới xây được kịch bản lệch miền có căn cứ thay vì mô phỏng proxy
+(theo chiến lược 3 bậc ở mục 6.1).
+
 
 ### 2.2. Ba định dạng dữ liệu không dùng chung một cách chia train/val/test
 
@@ -91,20 +96,6 @@ centralized và FL sau này đều có thể chỉ là do những confound trên
 
 ### 2.5. Đối chiếu con số paper báo cáo với dữ liệu thực tế trong repo
 
-| Nguồn bài | Số liệu bài báo | Thực tế repo (`Data/`) | Khớp? |
-|---|---|---|---|
-| Paper 1 | 559 ảnh | 471 ảnh DICOM (audit D6) | ✗ thiếu ~88 |
-| Paper 2 | 1.777 thu thập → 1.430 dùng | nằm trong 471 của repo | chỉ là tập con |
-| Paper 3 | 496 case, split 278/79/39 | 330/94/47 (ảnh), split khác hẳn | ✗ khác cả số lẫn split |
-| Paper 4 | 430 case, 340/100 | `test-hcl-svm` dùng 390 scan (370 scored) | gần khớp quy mô, khác số |
-| Paper 5 | 3.213 ca | không có trong repo | ngoài phạm vi |
-
-Con số bài báo và dữ liệu thực tế **không khớp nhau ở hầu hết các bài**. Hệ quả:
-để FL có ý nghĩa và Domain Adaptation chuẩn (có domain shift thật để kiểm chứng),
-cần **thêm dữ liệu** (T17 — xin dữ liệu SPECT thật, ưu tiên dù ít từ viện khác) và
-**điều tra phân phối** (T20 — phân phối không gian nhãn, `residual_state`, theo
-bệnh nhân) — từ đó mới xây được kịch bản lệch miền có căn cứ thay vì mô phỏng proxy
-(theo chiến lược 3 bậc ở mục 6.1).
 
 ## 3. Vấn đề nghiên cứu
 
